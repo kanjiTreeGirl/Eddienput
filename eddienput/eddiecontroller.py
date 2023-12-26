@@ -138,9 +138,9 @@ def play_queue():
 
 # parse a string into a series of frame commands
 def string_to_frames(s: str):
+    if s == '' or s== "W":
+        return [[],[]]
     moves = []
-    if s == '':
-        s = 'W'
     frames = s.split()
     res = []
     for frame in frames:
@@ -153,40 +153,39 @@ def string_to_frames(s: str):
                 # support for Wn with n being a natural number
                 res.extend([WAIT_CONST for _ in range(int(frame[1:]))])
     s = ' '.join(res)
+    print(s)
     for macro in macros_map:
         s = s.replace(macro, macros_map[macro])
     frames = s.split()
+    bracketMap = {"[":"]", "]":"["}
     for frame in frames:
         frame_moves = []
         splits = frame.split('+')
         i = 0
         while i < len(splits):
-            command = splits[i]
+            buttons = splits[i]
             i += 1
-            if command.startswith('['):
-                while not command.endswith(']'):
-                    command += '+' + splits[i]
-                    i += 1
-            elif command.startswith(']'):
-                while not command.endswith('['):
-                    command += '+' + splits[i]
+            if buttons[0] in bracketMap:
+                while not buttons[-1] == bracketMap[buttons[0]]:
+                    buttons.append(splits[i])
                     i += 1
             operation = 'tap'
-            if command.startswith('[') or command.startswith(']'):
-                if command.startswith('['):
-                    operation = 'press'
-                elif command.startswith(']'):
-                    operation = 'release'
-                command = command[1:-1]
-            buttons = command.split('+')
-            for button in buttons:
-                if button.startswith(WAIT_CONST):
-                    pass
-                else:
-                    frame_moves.append((symbols_map[button], operation))
+            if buttons[0] == '[':
+                operation = 'press'
+                buttons = buttons[1:-1]
+            if buttons[0] == ']':
+                operation = 'release'
+                buttons = buttons[1:-1]
+                
+
+            for button in buttons: 
+                if not button.startswith(WAIT_CONST): frame_moves.append((symbols_map[button], operation))
         moves.append(frame_moves)
     moves.append([])
+            
+                    
     return moves
+
 
 
 # press/release the inputs for the given frame
